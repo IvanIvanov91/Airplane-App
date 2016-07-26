@@ -1,0 +1,81 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Reservation Status"; 
+
+    int flightID = 0;
+    var resID = "";
+    var flightInfo = "";
+    var price = "";
+    int tickets = 0;
+    
+
+    if(!IsPost){
+        if(!Request.QueryString["ID"].IsEmpty() && Request.QueryString["ID"].IsInt()) {
+            resID = Request.QueryString["ID"];
+            var db = Database.Open("Airplanes");
+            var dbCommand = "SELECT * FROM Reservation WHERE ReservationID = @0";
+            var row = db.QuerySingle(dbCommand, resID);
+
+            if(row != null) {
+                flightID = row.Fl_ID;
+                flightInfo = row.FlightInfo;
+                price = row.Price;
+                tickets = row.TicketNumber;
+            }
+            else{
+                Validation.AddFormError("No reservation was selected.");
+                }
+            }
+            else{
+            Validation.AddFormError("No flight was selected.");
+            }
+        }
+            
+            if (IsPost){
+        /*Validation.RequireField("flightID", "Location is required");
+        Validation.RequireField("flightInfo", "You must enter a location");
+        Validation.RequireField("price", "You haven't entered a date");
+        Validation.RequireField("tickets", "You haven't entered a price");*/
+
+        flightID = Request.Form["flightID"].AsInt();
+        flightInfo = Request.Form["flightInfo"];
+        price = Request.Form["price"];
+        tickets = Request.Form["tickets"].AsInt();
+        resID = Request.Form["resID"];
+            
+        //if(Validation.IsValid()){
+            var db = Database.Open("Airplanes");
+            var updateCommand = "UPDATE Reservation SET Status=@0 WHERE ReservationID=@1";
+            db.Execute(updateCommand, "Paid", resID);
+            
+            Response.Redirect("~/Admin/AllReservations");
+            }
+        }
+
+  <h1>Edit a Reservation</h1>
+    
+  <form method="post">
+    <fieldset>
+      <legend>Reservation Information</legend>
+
+      <p><span>FlightID: </span>@flightID
+      <p><span>Flight Info: </span>@flightInfo
+      <p><span>ResID: </span>@resID
+      <p><span>Number of tickets: </span>@tickets
+      <p><span>Total price: $</span>@price
+         
+
+      <input type="hidden" name="resID" value="@resID" />
+          <input type="hidden" name="flightID" value="@flightID" />
+          <input type="hidden" name="flightInfo" value="@flightInfo" />
+<input type="hidden" name="tickets" value="@tickets" />
+          <input type="hidden" name="price" value="@price" />
+
+      <p><input type="submit" name="buttonSubmit" value="Confirm Payment" />
+<input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p></p>
+    </fieldset>
+  </form>

@@ -1,0 +1,76 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    }    
+
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Add Flight";
+ 
+    Validation.RequireField("departure", "You must enter a location");
+    Validation.RequireField("destination", "You must enter a location");
+    Validation.Add("date", Validator.Required("You must enter a date")); 
+
+    var db2 = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Locations ORDER BY Name");
+    var selectedData = db2.Query(selectCommand);
+    var departure = "";
+    var destination = "";
+    var date="";
+    var message = "";
+ 
+    if(IsPost && Validation.IsValid()){
+        departure = Request.Form["departure"];
+        destination = Request.Form["destination"];
+        date = Request.Form["date"];
+    
+    var db = Database.Open("Airplanes");
+
+            if (departure != destination){
+ 
+    var insertCommand = "INSERT INTO Flights (Departure, Destination, Date) VALUES(@0, @1, @2)";
+    db.Execute(insertCommand, departure, destination, date);
+    Response.Redirect("~/Members/ShowFlights");
+         }
+    else
+          {
+             message = "Destination and deparutre must be different locations!";        
+          }
+        }
+    }
+ 
+  <h1>Add a Flight</h1>
+    @Html.ValidationSummary()
+  <form method="post">
+    <fieldset>
+      <legend>Flight Information</legend>
+      <p><label for="departure">Departure:</label>
+           <select name="departure" required autofocus>
+        <option></option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select>        
+      </p>
+        <p><label for="destination">Destination:</label>
+         <select name="destination" required autofocus>
+        <option></option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select>
+         
+      </p>    
+      <p><label for="date">Date:</label>
+         <input type="text" name="date" id="pickdate" value="@Request.Form["date"]" required autofocus="true"/> 
+      </p> 
+      <p><input type="submit" name="buttonSubmit" value="Add Flight"/>
+      <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>        
+    </fieldset>
+  </form> 
+@Html.Raw(message) 
+<p><a href="~/Members/AllFlights">Return to flights listings</a></p>
+<script>
+    $('#pickdate').datetimepicker({minDate:0, format:'d.m.Y H:i'});
+  </script>

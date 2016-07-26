@@ -1,0 +1,65 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login?returnUrl="
+            + Request.Url.LocalPath);
+    }  
+
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Cancel Reservation";
+ 
+    var resID = "";
+    int ticket = 0;
+    var flightInfo = "";
+    var seats = "";
+    var price = "";
+ 
+    if(!IsPost){
+        if(!Request.QueryString["ID"].IsEmpty() && Request.QueryString["ID"].IsInt()){
+            resID = Request.QueryString["ID"];
+            var db = Database.Open("Airplanes");
+            var dbCommand = "SELECT * FROM  Reservation WHERE ReservationID = @0";
+            var row = db.QuerySingle(dbCommand, resID);
+
+            if(row != null) {
+                flightInfo = row.FlightInfo;
+                ticket = row.TicketNumber;
+                seats = row.Seats;
+                price = row.Price;
+            }
+            else{
+                Validation.AddFormError("No reservation was found for that ID.");
+            }
+        }
+        else{
+            Validation.AddFormError("No reservation was found for that ID.");
+        }
+    }
+ 
+    if(IsPost && !Request["buttonDelete"].IsEmpty()){
+        resID = Request.Form["resID"];
+        var db = Database.Open("Airplanes");
+        var deleteCommand = "DELETE FROM Reservation WHERE ReservationID = @0";
+        db.Execute(deleteCommand, resID);
+        Response.Redirect("~/Members/MyReservations");
+    }
+}
+      <h1>Cancel A Reservation</h1>
+        @Html.ValidationSummary()
+ 
+      <form method="post">
+        <fieldset>
+        <legend>Flight Information</legend>
+        <p><span>Flight Info:</span>
+         <span>@flightInfo</span></p>
+        <p><span>Number of tickets:</span>
+         <span>@ticket</span></p>
+            <p><span>Selecte seats:</span>
+         <span>@seats</span></p>
+        <p><span>Total Price:</span>
+         <span>$@price</span></p>
+ 
+        <input type="hidden" name="resID" value="@resID" />
+        <p><input type="submit" name="buttonDelete" value="Cancel Reservation" />
+        <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>
+        </fieldset>
+      </form>

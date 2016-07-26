@@ -1,0 +1,39 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Add Location";
+ 
+    Validation.RequireField("location", "You must enter a location");
+    var location = "";
+    var message = "";
+
+    if(IsPost && Validation.IsValid()){
+    location = Request.Form["location"];
+    var db = Database.Open("Airplanes");
+    try { 
+    var insertCommand = "INSERT INTO Locations (Name) VALUES(@0)";
+    db.Execute(insertCommand, location);
+    Response.Redirect("~/Members/AllFlights");
+    }
+    catch(Exception ex)
+          {
+             message = "Location allready exists. Try again.";        
+          }
+    }
+}
+  <h1>Add a Location</h1>
+    @Html.ValidationSummary()
+  <form action="" method="post" enctype="multipart/form-data">
+    <fieldset>
+      <legend>Location</legend>
+      <p><label for="location">Location:</label>
+         <input type="text" name="location" value="@Request.Form["location"]" required autofocus="true"/> 
+      <p><input type="submit" name="buttonSubmit" value="Add Location"/>
+      <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>        
+    </fieldset>
+  </form>
+    @Html.Raw(message) 
+<p><a href="~/Members/ShowFlights">Return to flights listings</a></p>

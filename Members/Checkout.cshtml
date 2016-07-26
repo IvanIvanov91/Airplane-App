@@ -1,0 +1,64 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login?returnUrl="
+            + Request.Url.LocalPath);
+    }
+
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Checkout";
+
+    var destination = Request["destination"];
+    var departure = Request["departure"];
+    var count = Request["count"];
+    var date = Request["date"];
+    var seats = Request["seats"];
+    var total = Request["total"];
+    var flightID = Request["flightID"];
+    var user = "";
+
+    var selected = Request["selected"];
+
+     if(IsPost){
+    var db = Database.Open("Airplanes");
+
+     var destination2 = Request["departure"]+" - " + Request["destination"] + ", "+ Request["date"];
+     var departure2 = Request["departure"];
+     var count2 = Request["count"];
+     var date2 = Request["date"];
+     var seats2 = Request["seats"];
+     var total2 = Request["total"];
+     user = WebSecurity.CurrentUserName;
+ 
+            var insertCommand = "INSERT INTO Reservation (TicketNumber, Seats, Price, FlightInfo, Username, Fl_Id, Status) VALUES(@0, @1, @2, @3, @4, @5, @6)";
+            db.Execute(insertCommand, count2, seats2, total2, destination2, user, flightID, "Unpaid");
+            Response.Redirect("~/Members/MyReservations");
+    }
+
+}
+
+<h1>Checkout</h1>
+
+      <form method="post">
+        <fieldset>
+        <legend>Ticket Information</legend>
+            <input type="hidden" name="destination2" value="@destination" readonly="true" />
+            <input type="hidden" name="departure2" value="@departure" readonly="true" />
+            <input type="hidden" name="date2" value="@date" readonly="true" />
+            <input type="hidden" name="total2" value="@total" readonly="true" />
+            <input type="hidden" name="seats2" value="@seats" readonly="true" />
+            <input type="hidden" name="count2" value="@count" readonly="true" />
+            <input type="hidden" name="flightID" value="@flightID" readonly="true" />
+            <input type="hidden" name="selected" value="@selected" readonly="true" />
+            <p><span>Flight information:</span>
+         <span>@departure - @destination, @date</span></p>
+          
+        <p><span>Number of tickets:</span>
+         <span>@count</span></p>
+        <p><span>Selected Seats:</span>
+         <span>@seats</span></p>
+        <p><span>Total Price:</span>
+         <span>$@total</span></p>  
+        <p><input type="submit" name="buttonSubmit" value="Checkout" />
+        <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>
+        </fieldset>
+      </form>

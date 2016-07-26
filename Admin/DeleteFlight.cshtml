@@ -1,0 +1,88 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+    
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Delete Flight";
+ 
+    var departure = "";
+    var destination = "";
+    var date = "";
+    var flightID = Request.QueryString["ID"];
+    var customerEmail = "";
+    var seats = "";
+    var flightInfo = "";
+    int tickets = 0;
+ 
+    if(!IsPost){
+        if(!Request.QueryString["ID"].IsEmpty() && Request.QueryString["ID"].IsInt()){
+
+            var db = Database.Open("Airplanes");
+            var dbCommand = "SELECT * FROM  Flights WHERE FlightID = @0";
+            var row = db.QuerySingle(dbCommand, flightID);
+
+            if(row != null) {
+                departure = row.Departure;
+                destination = row.Destination;
+                date = row.Date.ToString();
+            }
+            else{
+                Validation.AddFormError("No flight was found for that ID.");
+            }
+        }
+        else{
+            Validation.AddFormError("No flight was found for that ID.");
+        }
+    }
+ 
+    if(IsPost && !Request["buttonDelete"].IsEmpty()){
+        flightID = Request.Form["flightID"];
+        var db = Database.Open("Airplanes");
+        var deleteCommand = "DELETE FROM Flights WHERE FlightID = @0";
+        var deleteCommand2 = "DELETE FROM Reservation WHERE Fl_Id = @0";
+
+        var selectCommand = "(SELECT * FROM Reservation WHERE Fl_Id = @0)";
+        var selectedData = db.Query(selectCommand, flightID);
+ 
+        foreach(var row2 in selectedData){
+                customerEmail = row2.Username;
+                flightInfo = row2.FlightInfo;
+                tickets = row2.TicketNumber;
+                seats = row2.Seats;
+
+    WebMail.SmtpServer = "smtp.gmail.com";
+    WebMail.EnableSsl = true;
+    WebMail.UserName = "airballbg1@gmail.com";
+    WebMail.Password = "KDTrey5Maverick91";
+    WebMail.From = "airballbg1@gmail.com";
+
+        // Send email
+        WebMail.Send(to: customerEmail,
+            subject: "Flight cancelled - ",
+            body: "Dear " + customerEmail + ", The flight " + flightInfo + " was cancelled. You had " + tickets + " tickets for it for seats " + seats + " .Contact us to learn how to get a refund"
+        );}
+
+        db.Execute(deleteCommand, flightID);
+        db.Execute(deleteCommand2, flightID);
+        Response.Redirect("~/Members/AllFlights");
+    }
+}
+      <h1>Delete a Flight</h1>
+        @Html.ValidationSummary()
+ 
+      <form method="post">
+        <fieldset>
+        <legend>Flight Information</legend>
+        <p><span>Departure:</span>
+         <span>@departure</span></p>
+        <p><span>Destination:</span>
+         <span>@destination</span></p>
+        <p><span>Date:</span>
+         <span>@date</span></p>
+
+        <input type="hidden" name="flightid" value="@flightID" />
+        <p><input type="submit" name="buttonDelete" value="Delete FLight" />
+        <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>
+        </fieldset>
+      </form>

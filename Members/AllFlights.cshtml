@@ -1,0 +1,55 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    if (Roles.IsUserInRole("Admin")) {
+     Layout = "~/_AdminLayout.cshtml";
+    }  
+    Page.Title = "Flights Information";
+ 
+    var db = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Flights ORDER BY Date ");
+    var selectedData = db.Query(selectCommand);
+
+    var grid = new WebGrid(source: selectedData, rowsPerPage:10);
+}
+
+<div id="bg" class="popup_bg"></div>
+ 
+        <h1>All Flights</h1>
+
+            <div>
+                @if ( Roles.IsUserInRole("admin")){
+                    @grid.GetHtml(
+           tableStyle: "grid",
+    headerStyle: "head",
+     columns: grid.Columns(
+        grid.Column(format: @<a href="~/Admin/EditFlight?id=@item.FlightID">Edit</a>),
+        grid.Column(format: @<a href="~/Admin/DeleteFlight?id=@item.FlightID">Delete</a>),
+        grid.Column("Departure"),
+        grid.Column("Destination"),
+        grid.Column("Date"),
+        grid.Column("Price", format: @<text> $@item.Price </text>),
+        grid.Column(format: @<a href="~/Members/Reserve?id=@item.FlightID">Reserve Seats</a>)
+        )
+        )       
+                }
+                else  {
+                    @grid.GetHtml(
+           tableStyle: "grid",
+    headerStyle: "head",
+     columns: grid.Columns(
+        grid.Column("FlightID", "Flight #"),
+        grid.Column("Departure"),
+        grid.Column("Destination"),
+        grid.Column("Date"),
+        grid.Column("Price", format: @<text> $@item.Price </text>),
+        grid.Column(format: @<a href="~/Members/Reserve?id=@item.FlightID">Reserve Seats</a>)
+        )
+        )       
+                }                                                                                                         
+            </div>
+<style type="text/css">
+          .grid { margin: 4px; border-collapse: collapse; width: 75%; }
+          .grid th, .grid td { border: 1px solid #C0C0C0; padding: 5px; }
+          .head { background-color: #E8E8E8; font-weight: bold; color: #FFF; }
+          .alt { background-color: #E8E8E8; color: #000; }
+</style>

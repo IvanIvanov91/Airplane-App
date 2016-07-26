@@ -1,0 +1,223 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login");
+    }
+ 
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Select seats";
+
+    var selected="";
+    var name = "";
+    var departure = "";
+    var destination = "";
+    var date = "";
+    int price=0;
+    var seats = "";
+
+    var flightID = "";
+ 
+    if(!IsPost){
+        if(!Request.QueryString["ID"].IsEmpty() && Request.QueryString["ID"].IsInt()){
+            flightID = Request.QueryString["ID"];
+            var db = Database.Open("Airplanes");
+            var dbCommand = "SELECT * FROM Flights WHERE FlightID = @0";
+            var dbCommmand2 = "SELECT * FROM Reservation WHERE Fl_Id=@0";
+            var row = db.QuerySingle(dbCommand, flightID);
+            var selectedData = db.Query(dbCommmand2, flightID);
+
+            foreach(var row2 in selectedData){
+                seats = seats + "," + row2.Seats;
+                }
+           
+            if(row != null) {
+                departure = row.Departure;
+                destination = row.Destination;
+                date = row.Date.ToString();
+                price = row.Price;
+            }
+            else{
+                Validation.AddFormError("No flight was selected. Please, select a flight.");
+            }
+        }
+        else{
+            Validation.AddFormError("No flight was selected. Please, select a flight.");
+        }
+    }
+ }
+ 
+<meta http-equiv="refresh" content="301; URL=AllFlights">  
+<h1>Flight details:</h1>
+<div style="float: right">You have <span id="time"></span> minutes to select your seats!</div>
+        @Html.ValidationSummary()
+      <form id= "myform" method="get" action="Checkout">
+        <p><span>Departure: @departure</span></p>
+        <p><span>Destination: @destination</span></p>
+        <p><span>Date: @date</span></p>
+        <p><span>Regular Price: $@price / First Class: $@(price*1.5)</span></p>
+      <h4> Choose seats by clicking the corresponding seat in the layout below:</h4>
+        <br/>
+       <div id="holder">
+		<ul  id="place">
+        </ul>    
+	</div>
+	 <div style="width:100%;text-align:center;overflow:auto"> 
+	<ul id="seatDescription">
+<li id="free_seat">Regular Seat</li>
+<li id="first_class_seat">First Class</li>      
+<li id="booked_seat">Booked Seat</li>
+	</ul>        
+    </div>      
+	<div style="width:580px; text-align:left; margin:5px">	
+        <input type="button" id="btnShow" name="booked" value="Continue">
+         <input type="button" name="back" value="Back" onClick="history.go(-1);return true;">
+    </div>
+          <input type="hidden" name="destination" value="@destination" readonly="true" />
+            <input type="hidden" name="departure" value="@departure" readonly="true" />
+            <input type="hidden" name="date" value="@date" readonly="true" />
+          <input type="hidden" name="flightID" value="@flightID" readonly="true" />
+            <input type="hidden" name="seats" id="seats" />
+        <input type="hidden" name="count" id="count" />
+        <input type="hidden" name="total" id="total" />
+          <input type="hidden" name="selected" id="selected"/>
+    </form>
+<script type="text/javascript">
+    $(function () {
+        var settings = {
+            rows: 4,
+            cols: 20,
+            rowCssPrefix: 'row-',
+            colCssPrefix: 'col-',
+            seatWidth: 35,
+            seatHeight: 35,
+            seatCss: 'seat',
+            fseatCss: 'fseat',
+            selectedSeatCss: 'selectedSeat',
+            selectingSeatCss: 'selectingSeat'
+        };
+
+        var init = function (reservedSeat) {
+            var str = [], seatNo, className;
+            for (i = 0; i < settings.rows; i++) {
+                for (j = 5; j < settings.cols; j++) {
+                    seatNo = (i + j * settings.rows + 1);
+                    className = settings.seatCss + ' ' + settings.rowCssPrefix + i.toString() + ' ' + settings.colCssPrefix + j.toString();
+                    if ($.isArray(reservedSeat) && $.inArray(seatNo, reservedSeat) != -1) {
+                        className += ' ' + settings.selectedSeatCss;
+                    }
+                    str.push('<li class="' + className + '"' +
+                                      'style="top:' + (i * settings.seatHeight).toString() + 'px;left:' + (j * settings.seatWidth).toString() + 'px">' +
+                                      '<a title="' + seatNo + '">' + seatNo + '</a>' +
+                                      '</li>');
+                }
+            }
+            for (i = 0; i < settings.rows; i++) {
+                for (j = 0; j < 5; j++) {
+                    seatNo = (i + j * settings.rows + 1);
+                    className = settings.fseatCss + ' ' + settings.rowCssPrefix + i.toString() + ' ' + settings.colCssPrefix + j.toString();
+                    if ($.isArray(reservedSeat) && $.inArray(seatNo, reservedSeat) != -1) {
+                        className += ' ' + settings.selectedSeatCss;
+                    }
+                    str.push('<li class="' + className + '"' +
+                                      'style="top:' + (i * settings.seatHeight).toString() + 'px;left:' + (j * settings.seatWidth).toString() + 'px">' +
+                                      '<a title="' + seatNo + '">' + seatNo + '</a>' +
+                                      '</li>');
+                }
+            }
+            $('#place').html(str.join(''));
+        };
+
+        //case I: Show from starting
+        //init();
+
+        //Case II: If already booked
+        var bookedSeats = [@seats];
+        init(bookedSeats);
+
+        $('.' + settings.seatCss).click(function () {
+            if ($(this).hasClass(settings.selectedSeatCss)) {
+                alert('This seat is already reserved');
+            }
+            else {
+                $(this).toggleClass(settings.selectingSeatCss);
+                br++;
+            }
+        });
+
+        $('.' + settings.fseatCss).click(function () {
+            if ($(this).hasClass(settings.selectedSeatCss)) {
+                alert('This seat is already reserved');
+            }
+            else {
+                $(this).toggleClass(settings.selectingSeatCss);
+                br++;
+            }
+        });
+        
+        $('#btnShow').click(function () {
+            var str = [];
+            var str2 = [];
+            var regularPrice = @price, businessPrice = @(price*1.5), br1 = 0, br2 = 0, price = 0;
+
+            $.each($('#place li.' + settings.selectedSeatCss + ' a, #place li.' + settings.selectingSeatCss + ' a'), function (index, value) {
+                str.push($(this).attr('title'));
+            });
+            $.each($('#place li.' + settings.selectingSeatCss + ' a'), function (index, value) {
+                item = $(this).attr('title');
+                str2.push(item);
+                if (item <= 20) {
+                    br2++;
+                }
+                else br1++;
+            });
+            price = regularPrice * br1 + businessPrice * br2;
+
+            document.getElementById("count").value = br1+br2;
+            document.getElementById("total").value = price;
+    document.getElementById("seats").value = str2;
+    document.getElementById("selected").value = str;
+            if (price != 0) {
+                alert("Selected Seats: " + str2.join(',') + "\nTotal Price: $" + price);
+    document.getElementById("myform").submit();
+            }
+            else {
+    alert("No selected seats!");
+    }
+        })
+ });
+
+    function startTimer(duration, display) {
+    var start = Date.now(),
+        diff,
+        minutes,
+        seconds;
+    function timer() {
+        // get the number of seconds that have elapsed since 
+        // startTimer() was called
+        diff = duration - (((Date.now() - start) / 1000) | 0);
+
+        // does the same job as parseInt truncates the float
+        minutes = (diff / 60) | 0;
+        seconds = (diff % 60) | 0;
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds; 
+
+        if (diff <= 0) {
+            // add one second so that the count down starts at the full duration
+            // example 05:00 not 04:59
+            start = Date.now() + 1000;
+        }
+    };
+    // we don't want to wait a full second before the timer starts
+    timer();
+    setInterval(timer, 1000);
+}
+
+window.onload = function () {
+    var fiveMinutes = 60 * 5,
+        display = document.querySelector('#time');
+    startTimer(fiveMinutes, display);
+};
+</script>

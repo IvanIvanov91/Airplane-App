@@ -1,0 +1,42 @@
+﻿@{
+   if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Flights Information";
+ 
+    var db = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Reservation WHERE Status = @0 ORDER BY Fl_Id ");
+    var selectedData = db.Query(selectCommand, "Unpaid");
+
+     if (!selectedData.Any())
+    { 
+    Response.Redirect("~/Admin/Updated");
+    }
+
+    var grid = new WebGrid(source: selectedData, rowsPerPage:10);
+}
+
+<div id="bg" class="popup_bg"></div>
+         <h1>List Flights</h1>
+    @grid.GetHtml(
+    tableStyle: "grid",
+    headerStyle: "head",
+     columns: grid.Columns(
+        grid.Column("Fl_Id", "Flight #"),
+        grid.Column("FlightInfo", "Flight Information"),
+        grid.Column("ReservationID", "Resevation #"),
+        grid.Column("Price", format: @<text> $@item.Price </text>),
+        grid.Column("Status"),
+        grid.Column(format: @<a href="~/Admin/UpdateReservations?id=@item.ReservationID">Confirm Payment</a>)
+        )
+        )                                                                                                              
+            </div>
+
+<style type="text/css">
+          .grid { margin: 4px; border-collapse: collapse; width: 80%; }
+          .grid th, .grid td { border: 1px solid #C0C0C0; padding: 5px; }
+          .head { background-color: #E8E8E8; font-weight: bold; color: #FFF; }
+          .alt { background-color: #E8E8E8; color: #000; }
+</style>

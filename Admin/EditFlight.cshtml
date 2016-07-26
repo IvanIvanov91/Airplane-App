@@ -1,0 +1,100 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+
+    Layout = "~/_AdminLayout.cshtml";
+    Page.Title = "Edit Flight";
+ 
+    var departure = "";
+    var destination = "";
+    var date = "";
+    int price=0;
+    var flightID = "";
+
+    var db2 = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Locations ORDER BY Name");
+    var selectedData = db2.Query(selectCommand);
+
+    if(!IsPost){
+        if(!Request.QueryString["ID"].IsEmpty() && Request.QueryString["ID"].IsInt()) {
+            flightID = Request.QueryString["ID"];
+            var db = Database.Open("Airplanes");
+            var dbCommand = "SELECT * FROM Flights WHERE FlightID = @0";
+            var row = db.QuerySingle(dbCommand, flightID);
+
+            if(row != null) {
+                departure = row.Departure;
+                destination = row.Destination;
+                date = row.Date.ToString();
+                price = row.Price;
+            }
+            else{
+                Validation.AddFormError("No flight was selected.");
+            }
+        }
+        else{
+            Validation.AddFormError("No flight was selected.");
+        }
+    }
+
+    if(IsPost){
+        Validation.RequireField("departure", "Location is required");
+        Validation.RequireField("destination", "You must enter a location");
+        Validation.RequireField("date", "You haven't entered a date");
+        Validation.Add("date", Validator.DateTime("Start date must be a date"));
+        Validation.RequireField("price", "You haven't entered a price");
+        Validation.Add("price", Validator.Integer("You must enter a number!"));
+        Validation.RequireField("flightID", "No flight ID was submitted!");
+
+        departure = Request.Form["departure"];
+        destination = Request.Form["destination"];
+        date = Request.Form["date"];
+        price = Request.Form["price"].AsInt();
+        flightID = Request.Form["flightID"];
+
+        if(Validation.IsValid()){
+            var db = Database.Open("Airplanes");
+            var updateCommand = "UPDATE Flights SET Departure=@0, Destination=@1, Date=@2, Price=@3 WHERE FlightID=@4";
+            db.Execute(updateCommand, departure, destination, date, price, flightID);
+            Response.Redirect("~/Members/ShowFlights");
+        }
+    }
+}
+      <h1>Edit a Flight</h1>
+        @Html.ValidationSummary()
+ 
+      <form method="post">
+        <fieldset>
+        <legend>Flight Information</legend>
+ 
+        <p><label for="title">Departure:</label>
+            <select name="departure" required autofocus>
+        <option>@departure</option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select></p>
+
+      <p><label for="genre">Destination:</label>
+        <select name="destination" required autofocus>
+        <option>@destination</option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select></p>
+        <p><label for="date">Date:</label>
+         <input type="text" name="date" id="pickdate" value="@date" required autofocus="true"/></p>
+            <p><label for="price">Price ($):</label>
+         <input type="text" name="price" value="@price" required autofocus="true"/></p>
+
+        <input type="hidden" name="flightid" value="@flightID" />
+        <p><input type="submit" name="buttonSubmit" value="Submit Changes" />
+        <input type="button" name="back" value="Back" onClick="history.go(-1);return true;"></p>
+        </fieldset>
+      </form>
+<script>
+    $('#pickdate').datetimepicker();
+  </script>

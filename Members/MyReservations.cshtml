@@ -1,0 +1,67 @@
+﻿@{
+   if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login?returnUrl="
+            + Request.Url.LocalPath);
+    }
+
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "My Reservations";
+
+    var user = WebSecurity.CurrentUserName;
+   var option="";
+   var status=Request.Form["Status"];
+ 
+    var db = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Reservation WHERE Username = @0 ORDER BY FLightInfo ");
+    var selectedData = db.Query(selectCommand, user);
+    var row = db.QuerySingle(selectCommand, user);{
+        if(row != null) {
+                option = row.Price;
+                status = row.Status;
+            }
+    }
+
+    var grid = new WebGrid(source: selectedData, rowsPerPage:10);
+
+    if (!selectedData.Any())
+    { 
+    Response.Redirect("~/Members/NoReservations");
+    }
+}
+
+<div id="bg" class="popup_bg"></div>
+ 
+        <h1>My Reservations</h1>
+            <div>
+                    @grid.GetHtml(
+           tableStyle: "grid",
+    headerStyle: "head",
+ 
+     columns: grid.Columns(
+        grid.Column("FlightInfo", "Flight Information"),
+        grid.Column("TicketNumber", "Tickets"),
+        grid.Column("Seats"),
+        grid.Column("Price", format: @<text> @if (item.Status == "Unpaid") {<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+                <input type="hidden" name="cmd" value="_s-xclick">
+                <table style="float: left; margin-right: 10px;" >
+                <tr><td><select name="os0">
+	            <option value="Option 1">Total: $@item.Price</option>
+                </select> </td></tr>
+                </table>
+                <input type="hidden" name="currency_code" value="USD">
+                <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
+                ">
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_paynow_SM.gif" name="submit">
+                <img alt="1" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+                </form>} else { <p>$@item.Price</p>}</text>),
+        grid.Column("Status"),
+        grid.Column(format: @<text> @if (item.Status == "Unpaid") { <a href="~/Members/CancelReservation?id=@item.ReservationID">Cancel</a>}  </text>)
+        )
+        )                                                                                                                    
+            </div>
+<style type="text/css">
+          .grid { margin: 4px; border-collapse: collapse; width: 90%; }
+          .grid th, .grid td { border: 1px solid #C0C0C0; padding: 5px; }
+          .head { background-color: #E8E8E8; font-weight: bold; color: #FFF; }
+          .alt { background-color: #E8E8E8; color: #000; }
+</style>

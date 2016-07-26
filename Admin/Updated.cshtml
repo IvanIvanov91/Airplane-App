@@ -1,0 +1,10 @@
+﻿@{
+    if (!Roles.IsUserInRole("Admin")) {
+     Response.Redirect("~/Admin/AdminError");
+    } 
+
+    Layout = "~/_AdminLayout.cshtml";
+    PageData["Title"] = "Reservations Status";
+}
+<p>All reservations are up to date and there are no pending reservations.</p>
+<p><a href="~/">Return to admin panel</a></p>

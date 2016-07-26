@@ -1,0 +1,50 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Home Page";
+
+    var db2 = Database.Open("Airplanes") ;
+    var selectCommand = ("SELECT * FROM Locations ORDER BY Name");
+    var selectedData = db2.Query(selectCommand);
+    string ticket = Request.Form["ticket"];
+
+} 
+<h1>Select a Flight</h1>
+    @Html.ValidationSummary()
+  <form action="/Members/ShowFlights" method="post">
+    <fieldset style="margin-right: 450px; float: left">
+      <legend>Flight Information</legend>
+      <p style="float: left; padding-right: 10px;" ><label for="departure">Departure:</label>
+           <select name="departure" required autofocus>
+        <option></option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select></p>
+         
+      
+        <p><label for="destination">Destination:</label>
+         <select name="destination" required autofocus>
+        <option></option>
+        @foreach(var row in selectedData)
+        {
+            <option value="@row.Name">@row.Name</option>
+        }
+    </select></p>
+
+        <input type="radio" id="radiob1" name="ticket" value="Oneway" required="required"> One way
+        <input type="radio" id="radiob2" name="ticket" value="Twoway" required="required"> Two way<br>
+      <p><label for="date">Date:</label>
+         <input type="text" name="date" id="pickdate" value="@Request.Form["date"]" required autofocus="true"/> 
+      </p>
+        
+      <p><input type="submit" name="buttonSubmit" value="Search Flights"/>       
+    </fieldset>
+  </form>  
+<script>
+    $('#pickdate').datetimepicker({timepicker:false, minDate: 0, format:'d.m.Y'});
+  </script>
+<script type="text/javascript"><!--
+w=300;h=250;s=2;c=6;l=100727011;
+//--></script>
+<script type="text/javascript" src="http://m.netinfo.bg/sinoptik/js/show_widget.js"></script>

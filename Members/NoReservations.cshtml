@@ -1,0 +1,11 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login?returnUrl="
+            + Request.Url.LocalPath);
+    }
+
+    Layout = "~/_SiteLayout.cshtml";
+    PageData["Title"] = "No Reservations";
+}
+<p>You haven't made any reservations</p>
+<p><a href="~/">Return to flight selection</a></p>
